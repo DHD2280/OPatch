@@ -19,6 +19,7 @@ on:
       - '.github/**'
       - '.idea/**'
       - '!.github/workflows/**'
+  workflow_dispatch:
 
 jobs:
   build:
