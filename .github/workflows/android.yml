@@ -51,67 +51,10 @@ jobs:
       run: chmod +x gradlew
     - name: Build with Gradle
       run: | 
-        ./gradlew assembleDebug
-        echo "APK_FILE_ARMEABI=$(find app/build/outputs/apk/release -name 'OShin_armeabi-v7a_v*.apk')" >> $GITHUB_ENV
-        echo "APK_FILE_ARM64=$(find app/build/outputs/apk/release -name 'OShin_arm64-v8a_v*.apk')" >> $GITHUB_ENV
-        echo "APK_FILE_ARMALL=$(find app/build/outputs/apk/release -name 'OShin_all_v*.apk')" >> $GITHUB_ENV
-        echo "APK_FILE_METADATA=$(find app/build/outputs/apk/release -name 'output-metadata.json')" >> $GITHUB_ENV
-
-    - name: Show Artifacts SHA256
-      run: |
-        echo "### Build Success :rocket:" >> $GITHUB_STEP_SUMMARY
-        echo "|ABI|SHA256|" >> $GITHUB_STEP_SUMMARY
-        echo "|:--------:|:----------|" >> $GITHUB_STEP_SUMMARY
-        armeabi=$(sha256sum "${{ env.APK_FILE_ARMEABI }}")
-        echo "armeabi=${armeabi%% *}" >> $GITHUB_ENV  # Export to environment variable
-        echo "|armeabi|${armeabi%% *}|" >> $GITHUB_STEP_SUMMARY
-        arm64=$(sha256sum "${{ env.APK_FILE_ARM64 }}")
-        echo "arm64=${arm64%% *}" >> $GITHUB_ENV  # Export to environment variable
-        echo "|arm64|${arm64%% *}|" >> $GITHUB_STEP_SUMMARY
-        armAll=$(sha256sum "${{ env.APK_FILE_ARMALL }}")
-        echo "armAll=${armAll%% *}" >> $GITHUB_ENV  # Export to environment variable
-        echo "|armAll|${armAll%% *}|" >> $GITHUB_STEP_SUMMARY
-        metadata=$(sha256sum "${{ env.APK_FILE_METADATA }}")
-        echo "metadata=${metadata%% *}" >> $GITHUB_ENV  # Export to environment variable
-        echo "|metadata|${metadata%% *}|" >> $GITHUB_STEP_SUMMARY
-
-    - name: Upload All APK
+        ./gradlew assembleDebu
+    
+    - name: Upload a Build Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: OShin_all_${{ github.event.head_commit.id }}
-        path: ${{ env.APK_FILE_ARMALL }}
-
-    - name: Upload Arm64 APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: OShin_arm64-v8a_${{ github.event.head_commit.id }}
-        path: ${{ env.APK_FILE_ARM64 }}
-
-    - name: Upload Armeabi APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: OShin_armeabi-v7a_${{ github.event.head_commit.id }}
-        path: ${{ env.APK_FILE_ARMEABI }}
-
-    - name: Upload Metadata
-      uses: actions/upload-artifact@v4
-      with:
-        name: output-metadata
-        path: ${{ env.APK_FILE_METADATA }}
-    - name: Upload To Telegram Release
-      env:
-        COMMIT_MESSAGE: |+
-          🚀 **GitHub 新推送来了！**  
-          *👤 作者*：`${{ github.event.head_commit.author.name }}`  
-          *🔢 CommitID*：`${{ github.event.head_commit.id }}`  
-          *📄 提交信息 📄*  
-          
-          ${{ github.event.head_commit.message }}
-          
-          🔗 **查看详情**：[点我看具体内容](${{ github.event.head_commit.url }})
-        COMMIT_URL: ${{ github.event.head_commit.url }}
-      run: |
-        ESCAPED=`python3 -c 'import json, os, re, urllib.parse; msg = os.environ["COMMIT_MESSAGE"]; msg = re.sub(r"\-", r"\\-", msg); msg = re.sub(r"\.", r"\\.", msg); msg = json.dumps(msg); print(urllib.parse.quote(msg, safe=""))'`
-        echo "COMMIT_MESSAGE: $ESCAPED"
-        curl "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN  }}/sendMediaGroup?chat_id=-1002477655219&media=%5b%7b%22type%22%3a%22document%22%2c+%22media%22%3a%22attach%3a%2f%2farmAll%22%2c+%22parse_mode%22%3a%22MarkdownV2%22%2c+%22caption%22%3a${ESCAPED}%7d%5d%0a" \
-         -F armAll="@${{ env.APK_FILE_ARMALL }}"
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
